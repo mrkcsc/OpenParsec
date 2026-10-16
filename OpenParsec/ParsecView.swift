@@ -458,7 +458,7 @@ struct ParsecView: View {
 			}
 			disconnect(isBackgroundDisconnect: true)
 		}
-		.edgesIgnoringSafeArea(.all)
+		.ignoresSafeArea(.all)
 
 	}
 
