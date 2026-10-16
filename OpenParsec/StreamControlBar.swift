@@ -60,6 +60,29 @@ struct StreamStatsPanel: View {
 	}
 }
 
+struct StreamMenuPanel<Content: View>: View {
+	let content: Content
+	@State private var contentHeight: CGFloat?
+
+	init(@ViewBuilder content: () -> Content) {
+		self.content = content()
+	}
+
+	var body: some View {
+		ScrollView {
+			content
+				.padding(.vertical, 6)
+				.background(GeometryReader { geometry in
+					Color.clear
+						.onAppear { contentHeight = geometry.size.height }
+						.onChange(of: geometry.size.height) { contentHeight = $0 }
+				})
+		}
+		.frame(maxHeight: contentHeight)
+		.modifier(StreamPanelStyle())
+	}
+}
+
 private struct StreamPanelStyle: ViewModifier {
 	func body(content: Content) -> some View {
 		content

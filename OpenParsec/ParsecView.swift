@@ -267,7 +267,7 @@ struct ParsecView: View {
 				}
 				if showMenu {
 					HStack {
-						ScrollView {
+						StreamMenuPanel {
 							VStack(spacing: 3) {
 								Button(action: disableOverlay) {
 									Text("Hide Overlay")
@@ -362,8 +362,7 @@ struct ParsecView: View {
 										.multilineTextAlignment(.center)
 								}
 								Rectangle()
-									.fill(Color("Foreground"))
-									.opacity(0.25)
+									.fill(Color.white.opacity(0.16))
 									.frame(height: 1)
 								Button(action: { disconnect()}) {
 									Text("Disconnect")
@@ -373,10 +372,6 @@ struct ParsecView: View {
 										.multilineTextAlignment(.center)
 								}
 							}
-							.background(Rectangle().fill(Color("BackgroundPrompt").opacity(0.75)))
-							.foregroundColor(Color("Foreground"))
-							.frame(maxWidth: 175)
-							.cornerRadius(8)
 						}
 						.frame(maxWidth: 175)
 						Spacer()
