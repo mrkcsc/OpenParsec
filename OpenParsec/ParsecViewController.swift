@@ -67,6 +67,8 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	var keyboardAccessoriesView: UIView?
 	var keyboardHeight: CGFloat = 0.0
 	var keyboardVisible: Bool = false
+	private var autoKeyboardTimer: Timer?
+	private var autoKeyboardTrigger = AutoKeyboardTrigger()
 	var onKeyboardVisibilityChanged: ((Bool) -> Void)?
 	var scrollView: UIScrollView!
 	var contentView: UIView!
@@ -491,6 +493,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	}
 
 	@objc func keyboardWillShow(notification: NSNotification) {
+		cancelAutoKeyboard()
 		if let keyboardFrame = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
 			let keyboardFrameInView = view.convert(keyboardFrame, from: nil)
 			let scrollFrameInView = scrollView.convert(scrollView.bounds, to: view)
@@ -519,6 +522,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	}
 
 	@objc func keyboardWillHide(notification: NSNotification) {
+		cancelAutoKeyboard()
 		keyboardHeight = 0.0
         keyboardVisible = false
 
@@ -577,7 +581,10 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 
 	private func handleTouchCountChange(old: Int, new: Int) {
 		edgeScrollActive = false
-		if new > old { stopMomentum() }   // any new finger cancels an in-progress glide
+		if new > old {
+			stopMomentum()   // any new finger cancels an in-progress glide
+			cancelAutoKeyboard()
+		}
 		if new == 0 {
 			let flingCursor = (old == 1) && isDragging && !twoFingerResidual && !clickHoldActive
 			let flingScroll = (old == 2) && (twoFingerGesture?.mode == .scroll)
@@ -623,6 +630,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 
 	// Drop all touch state and release any held button so nothing sticks when backgrounded.
 	private func flushAllTouches() {
+		cancelAutoKeyboard()
 		stopMomentum()
 		releaseClickHoldIfNeeded()
 		endCursorIfNeeded()
@@ -908,13 +916,17 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 	@objc func handleSingleFingerTap(_ gestureRecognizer: UITapGestureRecognizer) {
 		// Only click if the finger stayed put; a moved finger was a cursor nudge, not a tap.
 		if cursorDidMoveThisTouch { return }
-		if SettingsHandler.cursorMode == .direct && directTouchWasPressed { return }
+		if SettingsHandler.cursorMode == .direct && directTouchWasPressed {
+			requestAutoKeyboard()
+			return
+		}
 		let location = gestureRecognizer.location(in: gestureRecognizer.view)
 		if SettingsHandler.cursorMode == .touchpad && prepareTouchpadCursor() {
 			CParsec.sendMousePosition(Int32(cursorContentPos.x), Int32(cursorContentPos.y))
 			positionCursorOverlay()
 		}
 		tapMouse(button: 1, at: location)
+		requestAutoKeyboard()
 	}
 
 	@objc func handleTwoFingerTap(_ gestureRecognizer: UITapGestureRecognizer) {
@@ -1032,6 +1044,49 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		cursorDidMoveThisTouch = true
 		twoFingerDidMove = true
 		SettingsHandler.cursorMode = mode
+	}
+
+	func setAutoKeyboardEnabled(_ enabled: Bool) {
+		cancelAutoKeyboard()
+		SettingsHandler.autoKeyboard = enabled
+	}
+
+	private func requestAutoKeyboard() {
+		cancelAutoKeyboard()
+		guard SettingsHandler.autoKeyboard, !keyboardVisible else { return }
+		autoKeyboardTrigger.arm(at: CACurrentMediaTime())
+		let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] timer in
+			guard let self else { timer.invalidate(); return }
+			self.checkAutoKeyboard()
+		}
+		autoKeyboardTimer = timer
+		RunLoop.main.add(timer, forMode: .common)
+	}
+
+	private func checkAutoKeyboard() {
+		guard SettingsHandler.autoKeyboard, !keyboardVisible, activeTouches.isEmpty,
+			  viewIfLoaded?.window != nil, UIApplication.shared.applicationState == .active,
+			  ParsecBackgroundManager.shared.hasActiveConnection,
+			  !ParsecBackgroundManager.shared.isMarkedForReconnect else {
+			cancelAutoKeyboard()
+			return
+		}
+		let mouse = CParsec.mouseInfo
+		let textCursor = !mouse.cursorHidden && !mouse.mousePositionRelative &&
+			mouse.cursorImg.map { TextCursorDetector.matches($0,
+				hotspot: CGPoint(x: mouse.cursorHotX, y: mouse.cursorHotY)) } == true
+		if autoKeyboardTrigger.shouldOpen(at: CACurrentMediaTime(), textCursor: textCursor) {
+			cancelAutoKeyboard()
+			setKeyboardVisible(true)
+		} else if !autoKeyboardTrigger.isPending {
+			cancelAutoKeyboard()
+		}
+	}
+
+	private func cancelAutoKeyboard() {
+		autoKeyboardTimer?.invalidate()
+		autoKeyboardTimer = nil
+		autoKeyboardTrigger.cancel()
 	}
 
 	func resetZoom() {
@@ -1255,6 +1310,7 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 	}
 
 	@objc private func inputWasReleased() {
+		cancelAutoKeyboard()
 		clearToolbarModifiers(sendToHost: false)
 	}
 
@@ -1303,11 +1359,13 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 	}
 
 	@objc func doneTapped() {
+		cancelAutoKeyboard()
 		// Resign first responder to dismiss the keyboard
 		resignFirstResponder()
 	}
 
 	@objc func showKeyboard() {
+		cancelAutoKeyboard()
 		becomeFirstResponder()
 	}
 
@@ -1317,6 +1375,7 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
     // 3. call becomeFirstResponder().
     // 4. Do NOT simplify this to a synchronous call, or it will fail in some race conditions.
 	func setKeyboardVisible(_ visible: Bool) {
+		cancelAutoKeyboard()
 		keyboardVisible = visible
 		if visible {
             DispatchQueue.main.async {

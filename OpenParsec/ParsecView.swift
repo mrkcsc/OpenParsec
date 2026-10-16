@@ -183,6 +183,7 @@ struct ParsecView: View {
 
 	@State var showKeyboard: Bool = false
 	@AppStorage("cursorMode") var cursorMode: CursorMode = .touchpad
+	@AppStorage("autoKeyboard") var autoKeyboard: Bool = false
 
 	@State var muted: Bool = false
 	@State var preferH265: Bool = true
@@ -382,6 +383,14 @@ struct ParsecView: View {
 							}
 							Button(action: toggleTapToClick) {
 								Text("Tap to click: \(cursorMode == .direct ? "ON" : "OFF")")
+									.padding(8)
+									.frame(maxWidth: .infinity)
+									.multilineTextAlignment(.center)
+							}
+							Button(action: {
+								parsecViewController.setAutoKeyboardEnabled(!autoKeyboard)
+							}) {
+								Text("Auto keyboard: \(autoKeyboard ? "ON" : "OFF")")
 									.padding(8)
 									.frame(maxWidth: .infinity)
 									.multilineTextAlignment(.center)

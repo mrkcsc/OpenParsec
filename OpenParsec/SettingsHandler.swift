@@ -7,6 +7,7 @@ struct SettingsHandler {
 	@AppStorage("bitrate") public static var bitrate: Int = 0
 	@AppStorage("decoder") public static var decoder: DecoderPref = .h264
 	@AppStorage("cursorMode") public static var cursorMode: CursorMode = .touchpad
+	@AppStorage("autoKeyboard") public static var autoKeyboard: Bool = false
 	@AppStorage("cursorScale") public static var cursorScale: Double = 0.5
 	@AppStorage("mouseSensitivity") public static var mouseSensitivity: Double = 1.0
 	@AppStorage("optionAsCommand") public static var optionAsCommand: Bool = false

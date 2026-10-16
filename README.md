@@ -19,6 +19,8 @@ Turn on **Tap to click** in the session menu to move the mouse to the spot you t
 
 You can also choose either mode under **Settings → Touch Mode**. Your choice is remembered between sessions.
 
+Enable **Auto keyboard** in the session menu or settings to open the keyboard when a tap leaves the mouse over a text-entry cursor. This optional cursor-shape heuristic can also trigger over selectable text and may miss custom cursors. It never closes the keyboard automatically; the keyboard button and three-finger tap remain available.
+
 When streaming, you can tap with 3 fingers to bring up the on-screen keyboard.
 
 Pinch with two fingers to zoom in or out around the point between your fingers. Once a pinch starts, move both fingers to pan the zoomed view. Zooming does not move the remote mouse.

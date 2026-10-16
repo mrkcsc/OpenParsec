@@ -8,6 +8,7 @@ struct SettingsView: View {
 	@AppStorage("bitrate") var bitrate: Int = 0
 	@AppStorage("decoder") var decoder: DecoderPref = .h264
 	@AppStorage("cursorMode") var cursorMode: CursorMode = .touchpad
+	@AppStorage("autoKeyboard") var autoKeyboard: Bool = false
 	@AppStorage("cursorScale") var cursorScale: Double = 0.5
 	@AppStorage("mouseSensitivity") var mouseSensitivity: Double = 1.0
 	@AppStorage("optionAsCommand") var optionAsCommand: Bool = false
@@ -83,6 +84,10 @@ struct SettingsView: View {
 									Choice("Tap to click", CursorMode.direct)
 								])
                             }
+							CatItem("Auto Keyboard") {
+								Toggle("", isOn: $autoKeyboard)
+									.frame(width: 80)
+							}
 							CatItem("Right Click Position") {
 								MultiPicker(selection: $rightClickPosition, options:
 								[
