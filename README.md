@@ -15,7 +15,9 @@ Before building, make sure you have the Parsec SDK framework symlinked or copied
 </a>
 
 ## Touch Control
-You can set the touch mode you want to use in settings. Touchpad mode and direct touch mode are supported.
+Turn on **Tap to click** in the session menu to move the mouse to the spot you tap and click there, including while zoomed in. Hold and move one finger to drag. Turn it off to use **Touchpad** mode, where dragging moves the mouse and tapping clicks at its current position.
+
+You can also choose either mode under **Settings → Touch Mode**. Your choice is remembered between sessions.
 
 When streaming, you can tap with 3 fingers to bring up the on-screen keyboard.
 

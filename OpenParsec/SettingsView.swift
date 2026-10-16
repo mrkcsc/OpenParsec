@@ -76,11 +76,11 @@ struct SettingsView: View {
 					ScrollView {
                         CatTitle("Interactivity")
                         CatList {
-                            CatItem("Mouse Movement") {
+                            CatItem("Touch Mode") {
                                 MultiPicker(selection: $cursorMode, options:
 								[
 									Choice("Touchpad", CursorMode.touchpad),
-									Choice("Direct", CursorMode.direct)
+									Choice("Tap to click", CursorMode.direct)
 								])
                             }
 							CatItem("Right Click Position") {

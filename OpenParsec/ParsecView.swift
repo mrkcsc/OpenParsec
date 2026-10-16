@@ -182,6 +182,7 @@ struct ParsecView: View {
 	@State var showMenu: Bool = false
 
 	@State var showKeyboard: Bool = false
+	@AppStorage("cursorMode") var cursorMode: CursorMode = .touchpad
 
 	@State var muted: Bool = false
 	@State var preferH265: Bool = true
@@ -375,6 +376,12 @@ struct ParsecView: View {
 
 							Button(action: toggleConstantFps) {
 								Text("Constant FPS: \(constantFps ? "ON" : "OFF")")
+									.padding(8)
+									.frame(maxWidth: .infinity)
+									.multilineTextAlignment(.center)
+							}
+							Button(action: toggleTapToClick) {
+								Text("Tap to click: \(cursorMode == .direct ? "ON" : "OFF")")
 									.padding(8)
 									.frame(maxWidth: .infinity)
 									.multilineTextAlignment(.center)
@@ -605,6 +612,10 @@ struct ParsecView: View {
 			showKeyboard.toggle()
 			parsecViewController.setKeyboardVisible(showKeyboard)
 		}
+	}
+
+	func toggleTapToClick() {
+		parsecViewController.setCursorMode(cursorMode == .direct ? .touchpad : .direct)
 	}
 
 	func resetZoom() {

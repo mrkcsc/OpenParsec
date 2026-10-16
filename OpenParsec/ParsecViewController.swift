@@ -910,12 +910,11 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		if cursorDidMoveThisTouch { return }
 		if SettingsHandler.cursorMode == .direct && directTouchWasPressed { return }
 		let location = gestureRecognizer.location(in: gestureRecognizer.view)
-		let adjustedLocation = contentView.convert(location, from: view)
 		if SettingsHandler.cursorMode == .touchpad && prepareTouchpadCursor() {
 			CParsec.sendMousePosition(Int32(cursorContentPos.x), Int32(cursorContentPos.y))
 			positionCursorOverlay()
 		}
-		touchController.onTap(typeOfTap: 1, location: adjustedLocation)
+		tapMouse(button: 1, at: location)
 	}
 
 	@objc func handleTwoFingerTap(_ gestureRecognizer: UITapGestureRecognizer) {
@@ -935,8 +934,17 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 			location = gestureRecognizer.location(in: gestureRecognizer.view)
 		}
 
-		let adjustedLocation = contentView.convert(location, from: view)
-		touchController.onTap(typeOfTap: 3, location: adjustedLocation)
+		tapMouse(button: 3, at: location)
+	}
+
+	private func tapMouse(button: Int, at location: CGPoint) {
+		let contentLocation = clampToContent(contentView.convert(location, from: view))
+		if SettingsHandler.cursorMode == .direct {
+			// Match the click locally so the host's cursor echo doesn't pan the zoomed view.
+			cursorContentPos = contentLocation
+			positionCursorOverlay()
+		}
+		touchController.onTap(typeOfTap: button, location: contentLocation)
 	}
 
 	@objc func handleThreeFinderTap(_ gestureRecognizer: UITapGestureRecognizer) {
@@ -1016,6 +1024,14 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		CParsec.sendMousePosition(Int32(cursorContentPos.x), Int32(cursorContentPos.y))
 		positionCursorOverlay()
 		return true
+	}
+
+	func setCursorMode(_ mode: CursorMode) {
+		guard SettingsHandler.cursorMode != mode else { return }
+		flushAllTouches()
+		cursorDidMoveThisTouch = true
+		twoFingerDidMove = true
+		SettingsHandler.cursorMode = mode
 	}
 
 	func resetZoom() {
