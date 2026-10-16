@@ -17,6 +17,8 @@ Before building, make sure you have the Parsec SDK framework symlinked or copied
 ## Touch Control
 The horizontal control bar stays inside the phone's safe area. Its matching icons open the session menu, show or hide the keyboard, and toggle Mission Control on a Mac host using Control–Up Arrow.
 
+Connection statistics appear in a matching panel at the bottom of the safe area, with centered text that wraps to fit the screen.
+
 Turn on **Tap to click** in the session menu to move the mouse to the spot you tap and click there, including while zoomed in. Hold and move one finger to drag. Turn it off to use **Touchpad** mode, where dragging moves the mouse and tapping clicks at its current position.
 
 You can also choose either mode under **Settings → Touch Mode**. Your choice is remembered between sessions.

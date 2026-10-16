@@ -22,11 +22,7 @@ struct StreamControlBar: View {
 				.opacity(missionControlEnabled ? 1 : 0.4)
 		}
 		.padding(6)
-		.background(Color.black.opacity(0.72))
-		.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-		.overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-			.strokeBorder(Color.white.opacity(0.16), lineWidth: 1))
-		.shadow(color: Color.black.opacity(0.2), radius: 8, y: 3)
+		.modifier(StreamPanelStyle())
 		.accessibilityElement(children: .contain)
 	}
 
@@ -35,7 +31,6 @@ struct StreamControlBar: View {
 		Button(action: action) {
 			Image(systemName: symbol)
 				.font(.system(size: 20, weight: .medium))
-				.foregroundColor(.white)
 				.frame(width: 44, height: 44)
 				.background(RoundedRectangle(cornerRadius: 10, style: .continuous)
 					.fill(Color.white.opacity(isActive ? 0.18 : 0)))
@@ -43,5 +38,36 @@ struct StreamControlBar: View {
 		}
 		.buttonStyle(PlainButtonStyle())
 		.accessibilityLabel(Text(label))
+	}
+}
+
+struct StreamStatsPanel: View {
+	let info: String
+
+	var body: some View {
+		Text(info.components(separatedBy: "    ")
+			.map { $0.replacingOccurrences(of: " ", with: "\u{00A0}") }
+			.joined(separator: "    "))
+			.font(.system(size: 11, design: .monospaced))
+			.multilineTextAlignment(.center)
+			.lineSpacing(3)
+			.lineLimit(nil)
+			.fixedSize(horizontal: false, vertical: true)
+			.frame(maxWidth: .infinity)
+			.padding(.horizontal, 12)
+			.padding(.vertical, 10)
+			.modifier(StreamPanelStyle())
+	}
+}
+
+private struct StreamPanelStyle: ViewModifier {
+	func body(content: Content) -> some View {
+		content
+			.foregroundColor(.white)
+			.background(Color.black.opacity(0.72))
+			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+			.overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+				.strokeBorder(Color.white.opacity(0.16), lineWidth: 1))
+			.shadow(color: Color.black.opacity(0.2), radius: 8, y: 3)
 	}
 }

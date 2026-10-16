@@ -27,22 +27,9 @@ struct ParsecStatusBar: View {
 	}
 
 	var body: some View {
-		// Overlay elements
 		if showMenu || SettingsHandler.alwaysShowStatus {
-			VStack {
-				Text(metricInfo)
-					.frame(minWidth: 200, maxWidth: .infinity, maxHeight: 20)
-					.multilineTextAlignment(.leading)
-					.font(.system(size: 10))
-					.lineSpacing(20)
-					.lineLimit(nil)
-			}
-			.background(Rectangle().fill(Color("BackgroundPrompt").opacity(0.75)))
-			.foregroundColor(Color("Foreground"))
-			.frame(maxHeight: .infinity, alignment: .top)
-			.zIndex(1)
-			.edgesIgnoringSafeArea(.all)
-
+			StreamStatsPanel(info: metricInfo)
+				.allowsHitTesting(false)
 		}
 		EmptyView()
 			.onReceive(timer) { _ in
@@ -231,8 +218,6 @@ struct ParsecView: View {
 				.zIndex(1)
 				.prefersPersistentSystemOverlaysHidden()
 
-			ParsecStatusBar(showMenu: $showMenu, showDCAlert: $showDCAlert, DCAlertText: $DCAlertText, parsecViewController: parsecViewController, isReconnecting: $isReconnecting, connectionLost: $connectionLost, onSilentDisconnect: { disconnect() })
-
 			if isReconnecting || connectionLost {
 				VStack(spacing: 12) {
 					ActivityIndicator(isAnimating: .constant(true), style: .large, tint: .white)
@@ -398,6 +383,7 @@ struct ParsecView: View {
 					}
 				}
 				Spacer()
+				ParsecStatusBar(showMenu: $showMenu, showDCAlert: $showDCAlert, DCAlertText: $DCAlertText, parsecViewController: parsecViewController, isReconnecting: $isReconnecting, connectionLost: $connectionLost, onSilentDisconnect: { disconnect() })
 			}
 			.padding(12)
 			.zIndex(2)
