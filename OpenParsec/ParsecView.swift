@@ -182,7 +182,6 @@ struct ParsecView: View {
 	@State var showMenu: Bool = false
 
 	@State var showKeyboard: Bool = false
-	@State var zoomEnabled: Bool = false
 
 	@State var muted: Bool = false
 	@State var preferH265: Bool = true
@@ -212,7 +211,6 @@ struct ParsecView: View {
 
 		let save = SettingsHandler.saveSessionSettings
 		_muted = State(initialValue: SettingsHandler.startMuted || (save && SettingsHandler.savedMuted))
-		_zoomEnabled = State(initialValue: save ? SettingsHandler.savedZoomEnabled : false)
 		_constantFps = State(initialValue: save ? SettingsHandler.savedConstantFps : false)
 		_resolutions = State(initialValue: ParsecResolution.resolutions)
 		_bitrates = State(initialValue: ParsecResolution.bitrates)
@@ -381,8 +379,8 @@ struct ParsecView: View {
 									.frame(maxWidth: .infinity)
 									.multilineTextAlignment(.center)
 							}
-							Button(action: toggleZoom) {
-								Text("Zoom: \(zoomEnabled ? "ON" : "OFF")")
+							Button(action: resetZoom) {
+								Text("Reset zoom")
 									.padding(8)
 									.frame(maxWidth: .infinity)
 									.multilineTextAlignment(.center)
@@ -489,7 +487,6 @@ struct ParsecView: View {
 		CParsec.applyConfig()
 		CParsec.setMuted(muted)
 		if muted { CParsec.pause(video: false, audio: true) }
-		parsecViewController.setZoomEnabled(zoomEnabled)
 
 		if SettingsHandler.saveSessionSettings {
 			DataManager.model.constantFps = constantFps
@@ -610,11 +607,9 @@ struct ParsecView: View {
 		}
 	}
 
-	func toggleZoom() {
+	func resetZoom() {
 		DispatchQueue.main.async {
-			zoomEnabled.toggle()
-			parsecViewController.setZoomEnabled(zoomEnabled)
-			if SettingsHandler.saveSessionSettings { SettingsHandler.savedZoomEnabled = zoomEnabled }
+			parsecViewController.resetZoom()
 		}
 	}
 

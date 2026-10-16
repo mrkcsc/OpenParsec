@@ -1,5 +1,7 @@
 # General
 .DS_Store
+.build/
+.swiftpm/
 .AppleDouble
 .LSOverride
 

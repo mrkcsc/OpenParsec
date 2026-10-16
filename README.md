@@ -19,7 +19,11 @@ You can set the touch mode you want to use in settings. Touchpad mode and direct
 
 When streaming, you can tap with 3 fingers to bring up the on-screen keyboard.
 
-You can toggle if you want to use 2 fingers to scroll or zoom in the overlay menu.
+Pinch with two fingers to zoom in or out around the point between your fingers. Once a pinch starts, move both fingers to pan the zoomed view. Zooming does not move the remote mouse.
+
+Move two fingers together without pinching to scroll on the remote computer. Tap with two fingers to right-click. The overlay menu's **Reset zoom** button returns to the full view.
+
+Gesture recognition and viewport geometry tests run locally with `swift test`.
 
 ## Mouse & keyboard
 USB mouse & keyboard are supported. 

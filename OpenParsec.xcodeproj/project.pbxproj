@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A7D20261016000100000001 /* TwoFingerGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000100000002 /* TwoFingerGesture.swift */; };
 		170E0A772BEF5AFF00B0EA32 /* ParsecViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 170E0A762BEF5AFF00B0EA32 /* ParsecViewController.swift */; };
 		17374D412CB8E35D00EDCEE7 /* KeyCodeTranslators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17374D402CB8E35500EDCEE7 /* KeyCodeTranslators.swift */; };
 		17840D1D2CB639530097374B /* ParsecUserData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17840D1C2CB6394D0097374B /* ParsecUserData.swift */; };
@@ -59,6 +60,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8A7D20261016000100000002 /* TwoFingerGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/TwoFingerGesture.swift; sourceTree = "<group>"; };
 		170E0A762BEF5AFF00B0EA32 /* ParsecViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsecViewController.swift; sourceTree = "<group>"; };
 		17374D402CB8E35500EDCEE7 /* KeyCodeTranslators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCodeTranslators.swift; sourceTree = "<group>"; };
 		17840D1C2CB6394D0097374B /* ParsecUserData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsecUserData.swift; sourceTree = "<group>"; };
@@ -173,6 +175,7 @@
 				274A69CE29EA07FA00F595A5 /* SettingsView.swift */,
 				FC16A7AC29A97BDA00BB70A7 /* Shared.swift */,
 				27A923DF29E8E53000F54BDA /* TouchHandlingView.swift */,
+				8A7D20261016000100000002 /* TwoFingerGesture.swift */,
 				27A923E129E8FEE900F54BDA /* UIViewControllerWrapper.swift */,
 				27AC751729EA339B00E8CAF7 /* URLImage.swift */,
 				17CD1E022BF07BC3003D2102 /* ViewContainerPatch.swift */,
@@ -292,6 +295,7 @@
 				E76224A12F8C017F00A2F86F /* ParsecBackgroundManager.swift in Sources */,
 				E762250B2F8D0A0100A2F86F /* PictureInPictureManager.swift in Sources */,
 				27A923E029E8E53000F54BDA /* TouchHandlingView.swift in Sources */,
+				8A7D20261016000100000001 /* TwoFingerGesture.swift in Sources */,
 				27E61A92292965FC00FF6563 /* AppDelegate.swift in Sources */,
 				27E61AAA2929B92200FF6563 /* MainView.swift in Sources */,
 				271D14FD292EAA3600D7F1D6 /* ParsecGLKViewController.swift in Sources */,

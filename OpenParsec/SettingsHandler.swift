@@ -26,7 +26,6 @@ struct SettingsHandler {
 	@AppStorage("autoConnectOnLaunch") public static var autoConnectOnLaunch: Bool = false
 
 	@AppStorage("saveSessionSettings") public static var saveSessionSettings: Bool = true
-	@AppStorage("savedZoomEnabled") public static var savedZoomEnabled: Bool = false
 	@AppStorage("savedConstantFps") public static var savedConstantFps: Bool = false
 	@AppStorage("savedMuted") public static var savedMuted: Bool = false
 
