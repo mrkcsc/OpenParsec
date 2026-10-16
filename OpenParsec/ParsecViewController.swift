@@ -63,6 +63,8 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	var twoFingerResidual = false       // leftover finger after a 2-finger gesture; inert until full lift
 	var activeTouches: [UITouch] = []   // ordered; first two drive pinch / scroll
 	private var twoFingerGesture: TwoFingerGesture?
+	private var threeFingerGesture: ThreeFingerPanGesture?
+	private var threeFingerDidMove = false
 
 	var keyboardAccessoriesView: UIView?
 	var keyboardHeight: CGFloat = 0.0
@@ -219,8 +221,8 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 
 		// Touch overlay: a transparent sibling ON TOP of the scroll view (and above the gamepad /
 		// touch controllers) that captures every raw touch and routes it deterministically
-		// (1 finger = cursor, 2 fingers = pinch / scroll). Added before the cursor image and the
-		// keyboard toolbar so those stay on top of it.
+		// (1 finger = cursor, 2 fingers = pinch / scroll, 3 fingers = pan). Added before the cursor
+		// image and the keyboard toolbar so those stay on top of it.
 		touchOverlay = TouchOverlayView(frame: view.bounds)
 		touchOverlay.backgroundColor = .clear
 		touchOverlay.isMultipleTouchEnabled = true
@@ -242,7 +244,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 		view.isMultipleTouchEnabled = true
 		view.isUserInteractionEnabled = true
 
-		// All gestures (cursor, pinch-zoom, two-finger scroll) are handled in the
+		// Continuous gestures (cursor, pinch-zoom, two-finger scroll, three-finger pan) are handled in the
 		// ParsecTouchInputDelegate methods below, driven by touchOverlay's raw touches.
 
 		// Add tap gesture recognizer for single-finger touch
@@ -552,7 +554,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 
 	func parsecTouchesUpdated(_ touches: Set<UITouch>, moved: Bool) {
 		let oldCount = activeTouches.count
-		let oldPair = Array(activeTouches.prefix(2))
+		let oldTouches = activeTouches
 		// Rebuild from the event each time (keeping order) so a cancelled touch can't leave a stale one.
 		var ordered = activeTouches.filter { touches.contains($0) }
 		for t in touches where !ordered.contains(t) {
@@ -561,8 +563,10 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		activeTouches = ordered
 		if activeTouches.count != oldCount {
 			handleTouchCountChange(old: oldCount, new: activeTouches.count)
-		} else if activeTouches.count == 2 && oldPair != activeTouches {
+		} else if activeTouches.count == 2 && oldTouches != activeTouches {
 			beginTwoFinger()
+		} else if activeTouches.count == 3 && oldTouches != activeTouches {
+			beginThreeFinger()
 		}
 		if moved { handleActiveTouchesMoved() }
 	}
@@ -575,6 +579,9 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 
 	private func handleTouchCountChange(old: Int, new: Int) {
 		edgeScrollActive = false
+		threeFingerGesture = nil
+		if old == 0 { threeFingerDidMove = false }
+		if new > 3 { threeFingerDidMove = true }
 		if new > old {
 			stopMomentum()   // any new finger cancels an in-progress glide
 			cancelAutoKeyboard()
@@ -609,6 +616,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 			} else {
 				twoFingerGesture = nil
 				twoFingerDidMove = true
+				if new == 3 { beginThreeFinger() }
 			}
 		}
 	}
@@ -632,6 +640,8 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		isDragging = false
 		twoFingerResidual = false
 		twoFingerGesture = nil
+		threeFingerGesture = nil
+		threeFingerDidMove = true
 		activeTouches = []
 	}
 
@@ -681,12 +691,27 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 										  second: activeTouches[1].location(in: view))
 	}
 
+	private func beginThreeFinger() {
+		guard activeTouches.count == 3 else { return }
+		threeFingerGesture = ThreeFingerPanGesture(first: activeTouches[0].location(in: view),
+			second: activeTouches[1].location(in: view), third: activeTouches[2].location(in: view))
+	}
+
 	private func handleActiveTouchesMoved() {
 		if (isDragging || clickHoldActive), !twoFingerResidual, activeTouches.count == 1, let t = activeTouches.first {
 			moveCursor(with: t)
 		} else if activeTouches.count == 2 {
 			handleTwoFinger()
+		} else if activeTouches.count == 3 {
+			handleThreeFinger()
 		}
+	}
+
+	private func handleThreeFinger() {
+		guard let update = threeFingerGesture?.update(first: activeTouches[0].location(in: view),
+			second: activeTouches[1].location(in: view), third: activeTouches[2].location(in: view)) else { return }
+		threeFingerDidMove = true
+		applyViewportChange(scaleFactor: 1, from: update.previousMidpoint, to: update.midpoint)
 	}
 
 	private func moveCursor(with t: UITouch) {
@@ -751,7 +776,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		if update.mode != .undecided { twoFingerDidMove = true }
 		switch update.mode {
 		case .zoom:
-			applyZoom(update)
+			applyViewportChange(scaleFactor: update.scaleFactor, from: update.previousMidpoint, to: update.midpoint)
 		case .scroll:
 			lastTapContentPoint = nil
 			let deltaY = Float(update.midpoint.y - update.previousMidpoint.y)
@@ -865,11 +890,11 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		if !stillActive { stopMomentum() }
 	}
 
-	private func applyZoom(_ update: TwoFingerGesture.Update) {
+	private func applyViewportChange(scaleFactor: CGFloat, from previousAnchor: CGPoint, to anchor: CGPoint) {
 		// A user-chosen viewport should survive keyboard dismissal.
 		keyboardViewportShift = 0
 		let viewport = ZoomViewport(scale: scrollView.zoomScale, offset: scrollView.contentOffset)
-		let next = viewport.pinching(by: update.scaleFactor, from: update.previousMidpoint, to: update.midpoint,
+		let next = viewport.pinching(by: scaleFactor, from: previousAnchor, to: anchor,
 			contentSize: contentView.bounds.size, viewportSize: scrollView.bounds.size,
 			bottomInset: scrollView.contentInset.bottom,
 			scaleRange: scrollView.minimumZoomScale...scrollView.maximumZoomScale)
@@ -962,6 +987,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 	}
 
 	@objc func handleThreeFinderTap(_ gestureRecognizer: UITapGestureRecognizer) {
+		guard !threeFingerDidMove else { return }
 		showKeyboard()
 	}
 
@@ -1407,7 +1433,7 @@ protocol ParsecTouchInputDelegate: AnyObject {
 
 // A transparent overlay that owns every raw touch and forwards it to the controller. Sitting on
 // top of (not inside) the scroll view, it gives deterministic, unfiltered touch delivery with no
-// UIScrollView gesture races - the controller decides 1-finger cursor vs 2-finger pinch / scroll.
+// UIScrollView gesture races - the controller routes cursor, pinch / scroll, and three-finger pan.
 class TouchOverlayView: UIView {
 	weak var inputDelegate: ParsecTouchInputDelegate?
 

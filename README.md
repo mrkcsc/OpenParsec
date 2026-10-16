@@ -25,9 +25,9 @@ When streaming, you can tap with 3 fingers to bring up the on-screen keyboard.
 
 The keyboard uses any black border below the stream before moving the view. When a recent tap identifies the likely input location, only that area is kept above the keyboard; otherwise the view moves just enough to uncover the stream. Dismissing the keyboard undoes its automatic shift without resetting your zoom.
 
-Pinch with two fingers to zoom in or out around the point between your fingers. Once a pinch starts, move both fingers to pan the zoomed view. Zooming does not move the remote mouse.
+Pinch with two fingers to zoom in or out around the point between your fingers. Once a pinch starts, move both fingers to pan the zoomed view. To pan without starting another pinch, drag with three fingers. Panning keeps the zoom level unchanged and does not open the keyboard. Zooming and panning do not move the remote mouse.
 
-Move two fingers together without pinching to scroll on the remote computer. Tap with two fingers to right-click. The overlay menu's **Reset zoom** button returns to the full view.
+Move two fingers together without pinching to scroll on the remote computer at any zoom level. Tap with two fingers to right-click. The overlay menu's **Reset zoom** button returns to the full view.
 
 Gesture recognition and viewport geometry tests run locally with `swift test`.
 

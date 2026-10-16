@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A7D20261016000400000001 /* ThreeFingerPanGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000400000002 /* ThreeFingerPanGesture.swift */; };
 		8A7D20261016000300000001 /* KeyboardViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000300000002 /* KeyboardViewport.swift */; };
 		8A7D20261016000200000001 /* AutoKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000200000002 /* AutoKeyboard.swift */; };
 		8A7D20261016000100000001 /* TwoFingerGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000100000002 /* TwoFingerGesture.swift */; };
@@ -62,6 +63,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8A7D20261016000400000002 /* ThreeFingerPanGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/ThreeFingerPanGesture.swift; sourceTree = "<group>"; };
 		8A7D20261016000300000002 /* KeyboardViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/KeyboardViewport.swift; sourceTree = "<group>"; };
 		8A7D20261016000200000002 /* AutoKeyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/AutoKeyboard.swift; sourceTree = "<group>"; };
 		8A7D20261016000100000002 /* TwoFingerGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/TwoFingerGesture.swift; sourceTree = "<group>"; };
@@ -180,6 +182,7 @@
 				FC16A7AC29A97BDA00BB70A7 /* Shared.swift */,
 				27A923DF29E8E53000F54BDA /* TouchHandlingView.swift */,
 				8A7D20261016000100000002 /* TwoFingerGesture.swift */,
+				8A7D20261016000400000002 /* ThreeFingerPanGesture.swift */,
 				8A7D20261016000200000002 /* AutoKeyboard.swift */,
 				8A7D20261016000300000002 /* KeyboardViewport.swift */,
 				27A923E129E8FEE900F54BDA /* UIViewControllerWrapper.swift */,
@@ -302,6 +305,7 @@
 				E762250B2F8D0A0100A2F86F /* PictureInPictureManager.swift in Sources */,
 				27A923E029E8E53000F54BDA /* TouchHandlingView.swift in Sources */,
 				8A7D20261016000100000001 /* TwoFingerGesture.swift in Sources */,
+				8A7D20261016000400000001 /* ThreeFingerPanGesture.swift in Sources */,
 				8A7D20261016000200000001 /* AutoKeyboard.swift in Sources */,
 				8A7D20261016000300000001 /* KeyboardViewport.swift in Sources */,
 				27E61A92292965FC00FF6563 /* AppDelegate.swift in Sources */,
