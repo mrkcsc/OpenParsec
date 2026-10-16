@@ -385,10 +385,14 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	private var repeatKeyCode: Int = -1
 	private var optCmdRemapActive = false
 	private var altKeyHeld = false
+	private var physicalControlKeys = Set<UIKeyboardHIDUsage>()
 
 	override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
 		for press in presses {
 			guard let key = press.key else { continue }
+			if key.keyCode == .keyboardLeftControl || key.keyCode == .keyboardRightControl {
+				physicalControlKeys.insert(key.keyCode)
+			}
 
 			if key.keyCode == .keyboardLeftAlt || key.keyCode == .keyboardRightAlt {
 				altKeyHeld = true
@@ -418,6 +422,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
 		for press in presses {
 			guard let key = press.key else { continue }
+			physicalControlKeys.remove(key.keyCode)
 
 			if optCmdRemapActive {
 				if key.keyCode == .keyboardLeftAlt || key.keyCode == .keyboardRightAlt {
@@ -478,6 +483,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 		stopKeyRepeat()
 		optCmdRemapActive = false
 		altKeyHeld = false
+		physicalControlKeys.removeAll()
 	}
 
 	private func isModifierKey(_ keyCode: UIKeyboardHIDUsage) -> Bool {
@@ -1081,6 +1087,22 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		SettingsHandler.autoKeyboard = enabled
 	}
 
+	func toggleMissionControl() {
+		guard UIApplication.shared.applicationState == .active,
+			  ParsecBackgroundManager.shared.hasActiveConnection,
+			  !ParsecBackgroundManager.shared.isMarkedForReconnect else { return }
+		cancelAutoKeyboard()
+		let toolbarControlHeld = keyboardAccessoriesView.map {
+			toolbarButtons(in: $0).contains { $0.keyText == "CONTROL" && $0.isOn }
+		} ?? false
+		let pressControl = physicalControlKeys.isEmpty && !toolbarControlHeld
+		// Preserve Control when the user is holding it on a keyboard or in the accessory bar.
+		if pressControl { CParsec.sendKeyboardMessage(keyCode: KEY_LCTRL.rawValue, pressed: true) }
+		CParsec.sendKeyboardMessage(keyCode: KEY_UP.rawValue, pressed: true)
+		CParsec.sendKeyboardMessage(keyCode: KEY_UP.rawValue, pressed: false)
+		if pressControl { CParsec.sendKeyboardMessage(keyCode: KEY_LCTRL.rawValue, pressed: false) }
+	}
+
 	private func requestAutoKeyboard() {
 		cancelAutoKeyboard()
 		guard SettingsHandler.autoKeyboard, !keyboardVisible else { return }
@@ -1343,6 +1365,7 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 
 	@objc private func inputWasReleased() {
 		cancelAutoKeyboard()
+		physicalControlKeys.removeAll()
 		clearToolbarModifiers(sendToHost: false)
 	}
 

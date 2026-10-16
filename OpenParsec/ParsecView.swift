@@ -227,6 +227,7 @@ struct ParsecView: View {
 		ZStack {
 
 			UIViewControllerWrapper(self.parsecViewController)
+				.ignoresSafeArea(.all)
 				.zIndex(1)
 				.prefersPersistentSystemOverlaysHidden()
 
@@ -264,166 +265,141 @@ struct ParsecView: View {
 					.zIndex(3)
 			}
 
-			VStack {
+			VStack(alignment: .leading, spacing: 8) {
 				if !hideOverlay {
 					HStack {
-						Button(action: {
-							if showMenu {
-								showMenu = false
-							} else {
-								showMenu = true
-								getHostUserData()
-							}
-						}) {
-							Image("IconTransparent")
-								.resizable()
-								.aspectRatio(contentMode: .fit)
-								.frame(width: 48, height: 48)
-								.background(Rectangle().fill(Color("BackgroundPrompt").opacity(showMenu ? 0.75 : 1)))
-								.cornerRadius(8)
-								.opacity(showMenu ? 1 : 0.25)
-						}
-						.padding()
-						.edgesIgnoringSafeArea(.all)
-						Spacer()
+						StreamControlBar(showMenu: showMenu, showKeyboard: showKeyboard,
+							keyboardButtonVisible: SettingsHandler.showKeyboardButton,
+							missionControlEnabled: !isReconnecting && !connectionLost && !dataModel.isBlocked,
+							onMenu: {
+								showMenu.toggle()
+								if showMenu { getHostUserData() }
+							}, onKeyboard: toggleKeyboard,
+							onMissionControl: parsecViewController.toggleMissionControl)
+						Spacer(minLength: 0)
 					}
-					if SettingsHandler.showKeyboardButton {
-						HStack {
-							Button(action: toggleKeyboard) {
-								Image(systemName: "keyboard")
-									.resizable()
-									.aspectRatio(contentMode: .fit)
-									.frame(width: 32, height: 32)
-									.foregroundColor(Color("Foreground"))
-									.padding(8)
-									.background(Rectangle().fill(Color("BackgroundPrompt").opacity(showKeyboard ? 0.75 : 0.5)))
-									.cornerRadius(8)
-							}
-							.padding(.leading)
-							.edgesIgnoringSafeArea(.all)
-							Spacer()
-						}
-					}
-
+					.fixedSize(horizontal: false, vertical: true)
 				}
 				if showMenu {
 					HStack {
-						VStack(spacing: 3) {
-							Button(action: disableOverlay) {
-								Text("Hide Overlay")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Button(action: toggleMute) {
-								Text("Sound: \(muted ? "OFF" : "ON")")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Menu {
-								ForEach(resolutions, id: \.self) { resolution in
-									Button(action: {
-										changeResolution(res: resolution)
-									}) {
-										if resolution.width == dataModel.resolutionX && resolution.height == dataModel.resolutionY {
-											Label(resolution.desc, systemImage: "checkmark")
-										} else {
-											Text(resolution.desc)
-										}
-									}
+						ScrollView {
+							VStack(spacing: 3) {
+								Button(action: disableOverlay) {
+									Text("Hide Overlay")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
 								}
-							} label: {
-								Text("Resolution")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Menu {
-								ForEach(bitrates, id: \.self) { bitrate in
-									Button(action: {
-										changeBitRate(bitrate: bitrate)
-									}) {
-                                        if bitrate == dataModel.bitrate {
-                                            Label("\(bitrate) Mbps", systemImage: "checkmark")
-                                        } else {
-                                            Text("\(bitrate) Mbps")
-                                        }
-									}
+								Button(action: toggleMute) {
+									Text("Sound: \(muted ? "OFF" : "ON")")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
 								}
-							} label: {
-								Text("Bitrate")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							if DataManager.model.displayConfigs.count > 1 {
 								Menu {
-									Button("Auto") {
-										changeDisplay(displayId: "none")
-									}
-									ForEach(DataManager.model.displayConfigs, id: \.self) { config in
-										Button("\(config.name) \(config.adapterName)") {
-											changeDisplay(displayId: config.id)
+									ForEach(resolutions, id: \.self) { resolution in
+										Button(action: {
+											changeResolution(res: resolution)
+										}) {
+											if resolution.width == dataModel.resolutionX && resolution.height == dataModel.resolutionY {
+												Label(resolution.desc, systemImage: "checkmark")
+											} else {
+												Text(resolution.desc)
+											}
 										}
 									}
 								} label: {
-									Text("Switch Display")
+									Text("Resolution")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
+								}
+								Menu {
+									ForEach(bitrates, id: \.self) { bitrate in
+										Button(action: {
+											changeBitRate(bitrate: bitrate)
+										}) {
+	                                        if bitrate == dataModel.bitrate {
+	                                            Label("\(bitrate) Mbps", systemImage: "checkmark")
+	                                        } else {
+	                                            Text("\(bitrate) Mbps")
+	                                        }
+										}
+									}
+								} label: {
+									Text("Bitrate")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
+								}
+								if DataManager.model.displayConfigs.count > 1 {
+									Menu {
+										Button("Auto") {
+											changeDisplay(displayId: "none")
+										}
+										ForEach(DataManager.model.displayConfigs, id: \.self) { config in
+											Button("\(config.name) \(config.adapterName)") {
+												changeDisplay(displayId: config.id)
+											}
+										}
+									} label: {
+										Text("Switch Display")
+											.padding(8)
+											.frame(maxWidth: .infinity)
+											.multilineTextAlignment(.center)
+									}
+								}
+
+								Button(action: toggleConstantFps) {
+									Text("Constant FPS: \(constantFps ? "ON" : "OFF")")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
+								}
+								Button(action: toggleTapToClick) {
+									Text("Tap to click: \(cursorMode == .direct ? "ON" : "OFF")")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
+								}
+								Button(action: {
+									parsecViewController.setAutoKeyboardEnabled(!autoKeyboard)
+								}) {
+									Text("Auto keyboard: \(autoKeyboard ? "ON" : "OFF")")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
+								}
+								Button(action: resetZoom) {
+									Text("Reset zoom")
+										.padding(8)
+										.frame(maxWidth: .infinity)
+										.multilineTextAlignment(.center)
+								}
+								Rectangle()
+									.fill(Color("Foreground"))
+									.opacity(0.25)
+									.frame(height: 1)
+								Button(action: { disconnect()}) {
+									Text("Disconnect")
+										.foregroundColor(.red)
 										.padding(8)
 										.frame(maxWidth: .infinity)
 										.multilineTextAlignment(.center)
 								}
 							}
-
-							Button(action: toggleConstantFps) {
-								Text("Constant FPS: \(constantFps ? "ON" : "OFF")")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Button(action: toggleTapToClick) {
-								Text("Tap to click: \(cursorMode == .direct ? "ON" : "OFF")")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Button(action: {
-								parsecViewController.setAutoKeyboardEnabled(!autoKeyboard)
-							}) {
-								Text("Auto keyboard: \(autoKeyboard ? "ON" : "OFF")")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Button(action: resetZoom) {
-								Text("Reset zoom")
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
-							Rectangle()
-								.fill(Color("Foreground"))
-								.opacity(0.25)
-								.frame(height: 1)
-							Button(action: { disconnect()}) {
-								Text("Disconnect")
-									.foregroundColor(.red)
-									.padding(8)
-									.frame(maxWidth: .infinity)
-									.multilineTextAlignment(.center)
-							}
+							.background(Rectangle().fill(Color("BackgroundPrompt").opacity(0.75)))
+							.foregroundColor(Color("Foreground"))
+							.frame(maxWidth: 175)
+							.cornerRadius(8)
 						}
-						.background(Rectangle().fill(Color("BackgroundPrompt").opacity(0.75)))
-						.foregroundColor(Color("Foreground"))
 						.frame(maxWidth: 175)
-						.cornerRadius(8)
-						.padding(.horizontal)
-						// .edgesIgnoringSafeArea(.all)
 						Spacer()
 					}
 				}
 				Spacer()
 			}
+			.padding(12)
 			.zIndex(2)
 		}
 		.statusBarHidden(SettingsHandler.hideStatusBar)
@@ -458,7 +434,7 @@ struct ParsecView: View {
 			}
 			disconnect(isBackgroundDisconnect: true)
 		}
-		.ignoresSafeArea(.all)
+		.ignoresSafeArea(.keyboard)
 
 	}
 
