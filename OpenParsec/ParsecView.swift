@@ -44,6 +44,10 @@ struct ParsecStatusBar: View {
 
 		var pcs = ParsecClientStatus()
 		var status = CParsec.getStatusEx(&pcs)
+		if status == PARSEC_OK {
+			parsecViewController?.updateViewportStreamSize(CGSize(width: Int(pcs.decoder.0.width),
+				height: Int(pcs.decoder.0.height)))
+		}
 
 		var pipActive = false
 		if #available(iOS 15.0, *) {
@@ -524,6 +528,7 @@ struct ParsecView: View {
 
 	func disconnect(isBackgroundDisconnect: Bool = false) {
 		appNote("[stream] disconnect\(isBackgroundDisconnect ? " in the background" : "")")
+		parsecViewController.saveViewport()
 		if !isBackgroundDisconnect {
 			ParsecBackgroundManager.shared.disableAutoReconnect()
 		}
@@ -537,9 +542,6 @@ struct ParsecView: View {
 		DataManager.model.output = "none"
 		CParsec.drawRate = 0
 		self.parsecViewController.glkView.cleanUp()
-
-		parsecViewController.scrollView.zoomScale = 1.0
-		parsecViewController.scrollView.contentOffset = .zero
 
 		if let c = controller {
 			c.setView(.main)

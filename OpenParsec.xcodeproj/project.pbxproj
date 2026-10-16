@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A7D20261016000600000001 /* SavedViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000600000002 /* SavedViewport.swift */; };
 		8A7D20261016000500000001 /* StreamControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000500000002 /* StreamControlBar.swift */; };
 		8A7D20261016000400000001 /* ThreeFingerPanGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000400000002 /* ThreeFingerPanGesture.swift */; };
 		8A7D20261016000300000001 /* KeyboardViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7D20261016000300000002 /* KeyboardViewport.swift */; };
@@ -64,6 +65,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8A7D20261016000600000002 /* SavedViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/SavedViewport.swift; sourceTree = "<group>"; };
 		8A7D20261016000500000002 /* StreamControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamControlBar.swift; sourceTree = "<group>"; };
 		8A7D20261016000400000002 /* ThreeFingerPanGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/ThreeFingerPanGesture.swift; sourceTree = "<group>"; };
 		8A7D20261016000300000002 /* KeyboardViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gestures/KeyboardViewport.swift; sourceTree = "<group>"; };
@@ -188,6 +190,7 @@
 				8A7D20261016000400000002 /* ThreeFingerPanGesture.swift */,
 				8A7D20261016000200000002 /* AutoKeyboard.swift */,
 				8A7D20261016000300000002 /* KeyboardViewport.swift */,
+				8A7D20261016000600000002 /* SavedViewport.swift */,
 				27A923E129E8FEE900F54BDA /* UIViewControllerWrapper.swift */,
 				27AC751729EA339B00E8CAF7 /* URLImage.swift */,
 				17CD1E022BF07BC3003D2102 /* ViewContainerPatch.swift */,
@@ -312,6 +315,7 @@
 				8A7D20261016000400000001 /* ThreeFingerPanGesture.swift in Sources */,
 				8A7D20261016000200000001 /* AutoKeyboard.swift in Sources */,
 				8A7D20261016000300000001 /* KeyboardViewport.swift in Sources */,
+				8A7D20261016000600000001 /* SavedViewport.swift in Sources */,
 				27E61A92292965FC00FF6563 /* AppDelegate.swift in Sources */,
 				27E61AAA2929B92200FF6563 /* MainView.swift in Sources */,
 				271D14FD292EAA3600D7F1D6 /* ParsecGLKViewController.swift in Sources */,

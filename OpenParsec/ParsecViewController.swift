@@ -79,6 +79,12 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	var contentView: UIView!
 	var lastLaidOutWidth: CGFloat = 0
 	var lastLaidOutHeight: CGFloat = 0
+	private let viewportHostID: String?
+	private let viewportStore = HostViewportStore()
+	private var pendingViewport: SavedViewport?
+	private var viewportStreamSize: CGSize?
+	private var viewportHasAppeared = false
+	private var preserveRestoredViewport = false
 
 	override var prefersPointerLocked: Bool {
 		return true
@@ -89,7 +95,12 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	}
 
 	init() {
+		viewportHostID = ParsecBackgroundManager.shared.lastPeerId
 		super.init(nibName: nil, bundle: nil)
+		if let viewportHostID {
+			pendingViewport = viewportStore.load(for: viewportHostID)
+			preserveRestoredViewport = pendingViewport != nil
+		}
 
 		self.glkView = ParsecGLKViewController(viewController: self, updateImage: { [weak self] in self?.updateImage() })
 
@@ -162,7 +173,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 				cursorContentPos = CGPoint(x: CGFloat(currentMouseX), y: CGFloat(currentMouseY))
 				positionCursorOverlay()
 				if scrollView.zoomScale > 1.0 {
-					if hostCursorMoved && !fingerSet {
+					if hostCursorMoved && !fingerSet && !preserveRestoredViewport {
 						keepCursorVisible()
 						positionCursorOverlay()
 					}
@@ -313,20 +324,8 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 
 	override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
 		super.viewWillTransition(to: size, with: coordinator)
+		pendingViewport = pendingViewport ?? currentViewport()
 		flushAllTouches()
-		keyboardViewportShift = 0
-
-		let h = size.height
-		let w = size.width
-
-		// Reset zoom on rotation
-		scrollView.zoomScale = 1.0
-		scrollView.contentOffset = .zero
-
-		self.glkView.updateSize(width: w, height: h)
-		contentView.frame.size = CGSize(width: w, height: h)
-		scrollView.contentSize = CGSize(width: w, height: h)
-		CParsec.setFrame(w, h, UIScreen.main.scale)
 
         // Reset accessory view to ensure correct width in new orientation
         clearToolbarModifiers(sendToHost: true)
@@ -338,24 +337,29 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 
 	override func viewDidLayoutSubviews() {
 		super.viewDidLayoutSubviews()
-		// glkView/contentView get sized from possibly-stale bounds in viewDidLoad and have no
-		// autoresizing, so the stream renders in a corner until a rotation re-applies the size.
-		// re-apply once layout settles; skip while zoomed so we dont stomp pan/zoom.
-		guard scrollView != nil, scrollView.zoomScale == 1.0 else { return }
+		guard scrollView != nil else { return }
 		let w = view.bounds.width
 		let h = view.bounds.height
 		guard w > 0, h > 0, w != lastLaidOutWidth || h != lastLaidOutHeight else { return }
+		pendingViewport = pendingViewport ?? currentViewport()
 		lastLaidOutWidth = w
 		lastLaidOutHeight = h
+		keyboardViewportShift = 0
+		scrollView.contentInset = .zero
+		scrollView.zoomScale = 1
+		scrollView.contentOffset = .zero
 		glkView.updateSize(width: w, height: h)
-		contentView.frame.size = CGSize(width: w, height: h)
+		contentView.frame = CGRect(x: 0, y: 0, width: w, height: h)
 		scrollView.contentSize = CGSize(width: w, height: h)
 		CParsec.setFrame(w, h, UIScreen.main.scale)
+		restoreViewportIfNeeded()
 		if !keyboardFrameInScreen.isNull { updateKeyboardViewport() }
 	}
 
 	override func viewDidAppear(_ animated: Bool) {
 		super.viewDidAppear(animated)
+		viewportHasAppeared = true
+		restoreViewportIfNeeded()
 		UIApplication.shared.isIdleTimerDisabled = true
 		if let parent = parent {
 			parent.setChildForHomeIndicatorAutoHidden(self)
@@ -369,6 +373,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 
 	override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
+		saveViewport()
 		UIApplication.shared.isIdleTimerDisabled = false
 		flushAllTouches()
 		if let parent = parent {
@@ -379,6 +384,39 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 		NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
 		NotificationCenter.default.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
 	}
+
+	func updateViewportStreamSize(_ size: CGSize) {
+		guard size.width > 0, size.height > 0 else { return }
+		viewportStreamSize = size
+		restoreViewportIfNeeded()
+	}
+
+	private func currentViewport() -> SavedViewport? {
+		guard isViewLoaded, let viewportStreamSize else { return nil }
+		return SavedViewport(viewport: ZoomViewport(scale: scrollView.zoomScale, offset: scrollView.contentOffset),
+			contentSize: contentView.bounds.size,
+			viewportSize: CGSize(width: lastLaidOutWidth, height: lastLaidOutHeight),
+			streamSize: viewportStreamSize, keyboardShift: keyboardViewportShift)
+	}
+
+	func saveViewport() {
+		guard pendingViewport == nil, let viewportHostID, let viewport = currentViewport() else { return }
+		viewportStore.save(viewport, for: viewportHostID)
+	}
+
+	private func restoreViewportIfNeeded() {
+		guard viewportHasAppeared, let pendingViewport, let viewportStreamSize,
+			  let restored = pendingViewport.restored(contentSize: contentView.bounds.size,
+				viewportSize: scrollView.bounds.size, streamSize: viewportStreamSize,
+				scaleRange: scrollView.minimumZoomScale...scrollView.maximumZoomScale) else { return }
+		self.pendingViewport = nil
+		preserveRestoredViewport = true
+		keyboardViewportShift = 0
+		scrollView.zoomScale = restored.scale
+		scrollView.setContentOffset(restored.offset, animated: false)
+		if !keyboardFrameInScreen.isNull { updateKeyboardViewport() }
+		positionCursorOverlay()
+	}
 	
 	
 	private var repeatTimer: Timer?
@@ -388,6 +426,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	private var physicalControlKeys = Set<UIKeyboardHIDUsage>()
 
 	override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+		preserveRestoredViewport = false
 		for press in presses {
 			guard let key = press.key else { continue }
 			if key.keyCode == .keyboardLeftControl || key.keyCode == .keyboardRightControl {
@@ -559,6 +598,8 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 	// gestures never fight. No UIScrollView gesture recognizer is in the loop.
 
 	func parsecTouchesUpdated(_ touches: Set<UITouch>, moved: Bool) {
+		// Initial cursor synchronization must not recenter a saved view before input resumes.
+		preserveRestoredViewport = false
 		let oldCount = activeTouches.count
 		let oldTouches = activeTouches
 		// Rebuild from the event each time (keeping order) so a cancelled touch can't leave a stale one.
@@ -602,6 +643,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 			twoFingerGesture = nil
 			if flingCursor { startCursorMomentum() }
 			if flingScroll { startScrollMomentum() }
+			saveViewport()
 		} else if new == 1 {
 			if old >= 2 {
 				// Leftover finger after a two-finger gesture: stay inert until full lift so it
@@ -634,7 +676,10 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		}
 	}
 
-	@objc private func appWillResignActive() { flushAllTouches() }
+	@objc private func appWillResignActive() {
+		saveViewport()
+		flushAllTouches()
+	}
 
 	// Drop all touch state and release any held button so nothing sticks when backgrounded.
 	private func flushAllTouches() {
@@ -897,6 +942,7 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 	}
 
 	private func applyViewportChange(scaleFactor: CGFloat, from previousAnchor: CGPoint, to anchor: CGPoint) {
+		pendingViewport = nil
 		// A user-chosen viewport should survive keyboard dismissal.
 		keyboardViewportShift = 0
 		let viewport = ZoomViewport(scale: scrollView.zoomScale, offset: scrollView.contentOffset)
@@ -1143,11 +1189,14 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 
 	func resetZoom() {
 		flushAllTouches()
+		pendingViewport = nil
+		if let viewportHostID { viewportStore.remove(for: viewportHostID) }
 		keyboardViewportShift = 0
 		UIView.animate(withDuration: 0.25, animations: {
 			self.scrollView.zoomScale = 1.0
 			self.scrollView.contentOffset = .zero
 			if self.keyboardVisible { self.updateKeyboardViewport() }
+			self.saveViewport()
 		}, completion: { _ in
 			self.positionCursorOverlay()
 		})
