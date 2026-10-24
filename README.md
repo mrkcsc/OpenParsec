@@ -38,6 +38,15 @@ Gesture recognition and viewport geometry tests run locally with `swift test`.
 ## Mouse & keyboard
 USB mouse & keyboard are supported. 
 
+## Copy & paste
+Use **Copy** and **Paste** at the top of the session menu or keyboard accessory bar. Select text on the remote computer, then tap **Copy** to copy it to your phone. Text copied using the host's own Copy command also reaches the phone while the session is active. Tap **Paste** to send the phone's text clipboard and paste it into the focused remote app.
+
+The buttons default to Mac shortcuts (⌘C / ⌘V). For a Windows or Linux host, choose **Shortcuts → Windows / Linux** in the session menu. Clipboard sharing must be enabled on the host and permitted for the connection; Parsec normally permits it on connections to your own computers. This supports plain text, including Unicode and multiple lines, up to 1 MB; images and files are not transferred.
+
+The phone's clipboard is read only when you request a paste. Clipboard contents are not saved or logged, and received text is kept out of Universal Clipboard to avoid sending it back to the host. Pending pastes are cancelled if the connection changes.
+
+The text transport uses Parsec user-data message 7, as implemented by [VDI Stream Client](https://github.com/mbroemme/vdi-stream-client/blob/849b25d65636b491ec8a4e121b34e17711cdb945/src/parsec.h#L60). Host clipboard settings are described in [Parsec's configuration reference](https://support.parsec.app/hc/en-us/articles/32381443626516-All-Advanced-Configuration-Options).
+
 ## Game Controllers
 When streaming, press any trigger button in your controller and parsec will recognize it. Make sure to configure the host properly (install virtual USB driver etc.) before using game controllers.
 

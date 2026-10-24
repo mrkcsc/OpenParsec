@@ -130,7 +130,8 @@ struct MouseInfo {
 	var mousePositionRelative = false
 }
 
-protocol ParsecService {
+protocol ParsecService: AnyObject {
+	var connectionGeneration: Int { get }
 	var clientWidth: Float { get }
 	var clientHeight: Float { get }
 	var hostWidth: Float { get }
@@ -159,6 +160,7 @@ protocol ParsecService {
 	func sendGameControllerUnplugMessage(controllerId: UInt32)
 	func sendWheelMsg(x: Int32, y: Int32)
 	func sendUserData(type: ParsecUserDataType, message: Data)
+	func sendClipboardText(_ text: String) -> ParsecStatus
 	func sendReleaseMessage()
 	func reconnect(_ peerID: String) -> ParsecStatus
 	func pause(video: Bool, audio: Bool) -> ParsecStatus

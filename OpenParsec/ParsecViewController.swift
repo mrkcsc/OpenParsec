@@ -14,6 +14,9 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	var glkView: ParsecPlayground!
 	var gamePadController: GamepadController!
 	var touchController: TouchController!
+	lazy var clipboard = StreamClipboardController(service: CParsec.parsecImpl) { [weak self] key, command in
+		self?.sendClipboardShortcut(key, usesCommand: command)
+	}
 	var u: UIImageView?
 	var lastImg: CGImage?
     var lastMouseX: Int32 = -1
@@ -185,6 +188,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	}
 
 	override func viewDidLoad() {
+		_ = clipboard
 		// ScrollView Setup
 		scrollView = UIScrollView(frame: view.bounds)
 		scrollView.delegate = self
@@ -424,6 +428,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	private var optCmdRemapActive = false
 	private var altKeyHeld = false
 	private var physicalControlKeys = Set<UIKeyboardHIDUsage>()
+	private var physicalCommandKeys = Set<UIKeyboardHIDUsage>()
 
 	override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
 		preserveRestoredViewport = false
@@ -431,6 +436,9 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 			guard let key = press.key else { continue }
 			if key.keyCode == .keyboardLeftControl || key.keyCode == .keyboardRightControl {
 				physicalControlKeys.insert(key.keyCode)
+			}
+			if key.keyCode == .keyboardLeftGUI || key.keyCode == .keyboardRightGUI {
+				physicalCommandKeys.insert(key.keyCode)
 			}
 
 			if key.keyCode == .keyboardLeftAlt || key.keyCode == .keyboardRightAlt {
@@ -462,6 +470,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 		for press in presses {
 			guard let key = press.key else { continue }
 			physicalControlKeys.remove(key.keyCode)
+			physicalCommandKeys.remove(key.keyCode)
 
 			if optCmdRemapActive {
 				if key.keyCode == .keyboardLeftAlt || key.keyCode == .keyboardRightAlt {
@@ -523,6 +532,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 		optCmdRemapActive = false
 		altKeyHeld = false
 		physicalControlKeys.removeAll()
+		physicalCommandKeys.removeAll()
 	}
 
 	private func isModifierKey(_ keyCode: UIKeyboardHIDUsage) -> Bool {
@@ -1301,6 +1311,21 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 		CParsec.sendVirtualKeyboardInput(text: text)
 	}
 
+	private func sendClipboardShortcut(_ key: ParsecKeycode, usesCommand: Bool) {
+		cancelAutoKeyboard()
+		let modifier = usesCommand ? KEY_LGUI : KEY_LCTRL
+		let name = usesCommand ? "LGUI" : "CONTROL"
+		let toolbarHeld = keyboardAccessoriesView.map {
+			toolbarButtons(in: $0).contains { $0.keyText == name && $0.isOn }
+		} ?? false
+		let physicallyHeld = usesCommand ? (!physicalCommandKeys.isEmpty || optCmdRemapActive) : !physicalControlKeys.isEmpty
+		let pressModifier = !toolbarHeld && !physicallyHeld
+		if pressModifier { CParsec.sendKeyboardMessage(keyCode: modifier.rawValue, pressed: true) }
+		CParsec.sendKeyboardMessage(keyCode: key.rawValue, pressed: true)
+		CParsec.sendKeyboardMessage(keyCode: key.rawValue, pressed: false)
+		if pressModifier { CParsec.sendKeyboardMessage(keyCode: modifier.rawValue, pressed: false) }
+	}
+
 	func deleteBackward() {
 		CParsec.sendVirtualKeyboardInput(text: "BACKSPACE")
 	}
@@ -1332,6 +1357,20 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 		buttonStackView.alignment = .center
 		buttonStackView.spacing = 8
 		buttonStackView.translatesAutoresizingMaskIntoConstraints = false
+		let copyButton = UIButton(type: .system)
+		copyButton.setTitle("Copy", for: .normal)
+		copyButton.setTitleColor(.white, for: .normal)
+		copyButton.backgroundColor = .black
+		copyButton.layer.cornerRadius = 8
+		copyButton.accessibilityLabel = "Copy selected text from host"
+		copyButton.addTarget(self, action: #selector(copyFromHost), for: .touchUpInside)
+		copyButton.widthAnchor.constraint(equalToConstant: 52).isActive = true
+		copyButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+		buttonStackView.addArrangedSubview(copyButton)
+		let pasteButton = clipboard.makePasteControl()
+		pasteButton.widthAnchor.constraint(equalToConstant: 90).isActive = true
+		pasteButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+		buttonStackView.addArrangedSubview(pasteButton)
 
 		let shiftBarButton = createKeyboardButton(displayText: "⇧", keyText: "SHIFT", isToggleable: true)
 		let windowsBarButton = createKeyboardButton(displayText: "⌘", keyText: "LGUI", isToggleable: true)
@@ -1415,8 +1454,11 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 	@objc private func inputWasReleased() {
 		cancelAutoKeyboard()
 		physicalControlKeys.removeAll()
+		physicalCommandKeys.removeAll()
 		clearToolbarModifiers(sendToHost: false)
 	}
+
+	@objc private func copyFromHost() { clipboard.copySelection() }
 
 	private func clearToolbarModifiers(sendToHost: Bool) {
 		guard let bar = keyboardAccessoriesView else { return }

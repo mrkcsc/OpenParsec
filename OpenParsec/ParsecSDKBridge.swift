@@ -58,6 +58,7 @@ class ParsecSDKBridge: ParsecService {
 	public var pngCursor: Bool = false
 	private let generationLock = NSLock()
 	private var currentGeneration = 0
+	var connectionGeneration: Int { pollGeneration }
 	private var pollGeneration: Int {
 		get {
 			generationLock.lock()
@@ -269,6 +270,7 @@ class ParsecSDKBridge: ParsecService {
 
 	@discardableResult
 	func pollEvent(timeout: UInt32 = 16, sawCursor: inout Bool) -> Bool { // timeout in ms, 16 == 60 FPS, 8 == 120 FPS, etc.
+		let generation = pollGeneration
 		var e: ParsecClientEvent!
 		var _event = ParsecClientEvent()
 		var pollSuccess = false
@@ -282,7 +284,7 @@ class ParsecSDKBridge: ParsecService {
 		if e.type == CLIENT_EVENT_CURSOR {
 			handleCursorEvent(event: e.cursor, sawCursor: &sawCursor)
 		} else if e.type == CLIENT_EVENT_USER_DATA {
-			handleUserDataEvent(event: e.userData)
+			handleUserDataEvent(event: e.userData, generation: generation)
 		} else if e.type == CLIENT_EVENT_STREAM {
 			os_log("%{public}@", log: sdkLog, "[stream] s=\(e.stream.stream) status=\(e.stream.status.rawValue)")
 		} else if e.type == CLIENT_EVENT_BLOCKED {
@@ -293,13 +295,23 @@ class ParsecSDKBridge: ParsecService {
 		return false
 	}
 
-	func handleUserDataEvent(event: ParsecClientUserDataEvent) {
+	func handleUserDataEvent(event: ParsecClientUserDataEvent, generation: Int) {
 
 		let pointer = ParsecGetBuffer(_parsec, event.key)
 		if pointer == nil {
 			return
 		}
 		switch event.id {
+		case ParsecUserDataType.clipboard.rawValue:
+			let length = strnlen(pointer!, ClipboardText.maximumBytes + 1)
+			if length <= ClipboardText.maximumBytes,
+			   let text = ClipboardText.decode(Data(bytes: pointer!, count: length)) {
+				DispatchQueue.main.async { [weak self] in
+					guard let self, self.pollGeneration == generation else { return }
+					NotificationCenter.default.post(name: .parsecClipboardReceived, object: self,
+						userInfo: ["text": text, "generation": generation])
+				}
+			}
 		case 11:
 			do {
 				let decoder = JSONDecoder()
@@ -624,6 +636,12 @@ class ParsecSDKBridge: ParsecService {
 
 		DispatchQueue.global().async(execute: audio)
 		DispatchQueue.global().async(execute: event)
+	}
+
+	func sendClipboardText(_ text: String) -> ParsecStatus {
+		guard ClipboardText.validationError(text) == nil else { return ERR_DEFAULT }
+		guard getStatus() == PARSEC_OK else { return PARSEC_NOT_RUNNING }
+		return text.withCString { ParsecClientSendUserData(_parsec, ParsecUserDataType.clipboard.rawValue, $0) }
 	}
 
 	func sendUserData(type: ParsecUserDataType, message: Data) {

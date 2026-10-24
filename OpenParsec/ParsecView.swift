@@ -273,6 +273,9 @@ struct ParsecView: View {
 					HStack {
 						StreamMenuPanel {
 							VStack(spacing: 3) {
+								StreamClipboardControls(clipboard: parsecViewController.clipboard,
+									enabled: !isReconnecting && !connectionLost && !dataModel.isBlocked)
+								Rectangle().fill(Color.white.opacity(0.16)).frame(height: 1)
 								Button(action: disableOverlay) {
 									Text("Hide Overlay")
 										.padding(8)
