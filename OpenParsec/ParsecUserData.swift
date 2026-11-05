@@ -1,11 +1,29 @@
+enum ParsecHostOS: Int {
+	case unknown = 0
+	case windows = 1
+	case macOS = 2
+
+	var windowOverviewLabel: String {
+		switch self {
+		case .windows: return "Task View"
+		case .macOS: return "Mission Control"
+		case .unknown: return "Show windows"
+		}
+	}
+}
+
 struct ParsecUserDataVideo: Codable {
 	var encoderFPS: Int = 0
 	var resolutionX: Int = 0
 	var resolutionY: Int = 0
 	var fullFPS: Bool = false
-	var hostOS = 0
+	var hostOS: Int? = 0
 	var output = "none"
 	var encoderMaxBitrate: Int = 50
+
+	var operatingSystem: ParsecHostOS {
+		ParsecHostOS(rawValue: hostOS ?? 0) ?? .unknown
+	}
 }
 
 struct ParsecUserDataVideoConfig: Codable {

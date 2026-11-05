@@ -4,10 +4,11 @@ struct StreamControlBar: View {
 	let showMenu: Bool
 	let showKeyboard: Bool
 	let keyboardButtonVisible: Bool
-	let missionControlEnabled: Bool
+	let windowOverviewEnabled: Bool
+	let windowOverviewLabel: String
 	let onMenu: () -> Void
 	let onKeyboard: () -> Void
-	let onMissionControl: () -> Void
+	let onWindowOverview: () -> Void
 
 	var body: some View {
 		HStack(spacing: 4) {
@@ -17,9 +18,9 @@ struct StreamControlBar: View {
 				control("keyboard", label: showKeyboard ? "Hide keyboard" : "Show keyboard",
 					isActive: showKeyboard, action: onKeyboard)
 			}
-			control("rectangle.3.group", label: "Mission Control", action: onMissionControl)
-				.disabled(!missionControlEnabled)
-				.opacity(missionControlEnabled ? 1 : 0.4)
+			control("rectangle.3.group", label: windowOverviewLabel, action: onWindowOverview)
+				.disabled(!windowOverviewEnabled)
+				.opacity(windowOverviewEnabled ? 1 : 0.4)
 		}
 		.padding(6)
 		.modifier(StreamPanelStyle())

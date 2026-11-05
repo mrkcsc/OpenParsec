@@ -114,6 +114,7 @@ class ParsecSDKBridge: ParsecService {
 	}
 
 	func connect(_ peerID: String) -> ParsecStatus {
+		DataManager.model.hostOperatingSystem = .unknown
 
 		var parsecClientCfg = ParsecClientConfig()
 		parsecClientCfg.video.0.decoderIndex = 1
@@ -149,6 +150,7 @@ class ParsecSDKBridge: ParsecService {
 	func disconnect() {
 
 		pollGeneration += 1
+		DataManager.model.hostOperatingSystem = .unknown
 		// must go before the disconnect, after it the release never reaches the host
 		sendReleaseMessage()
 		ParsecClientDisconnect(_parsec)
@@ -209,6 +211,7 @@ class ParsecSDKBridge: ParsecService {
 		if ans == PARSEC_OK && !didReleaseOnConnect {
 			didReleaseOnConnect = true
 			sendReleaseMessage()
+			sendUserData(type: .getVideoConfig, message: Data())
 		}
 
 		return ans
@@ -317,8 +320,11 @@ class ParsecSDKBridge: ParsecService {
 				let decoder = JSONDecoder()
 				let config = try decoder.decode(ParsecUserDataVideoConfig.self, from: Data(bytesNoCopy: pointer!, count: strlen(pointer!), deallocator: .none))
 				let videoConfig = config.video.first
-				DispatchQueue.main.async {
+				DispatchQueue.main.async { [weak self] in
+					guard let self, self.pollGeneration == generation,
+						  CParsec.parsecImpl === self else { return }
 					if let cfg = videoConfig {
+						DataManager.model.hostOperatingSystem = cfg.operatingSystem
 						DataManager.model.resolutionX = cfg.resolutionX
 						DataManager.model.resolutionY = cfg.resolutionY
 						DataManager.model.bitrate = cfg.encoderMaxBitrate

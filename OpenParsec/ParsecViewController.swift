@@ -15,7 +15,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	var gamePadController: GamepadController!
 	var touchController: TouchController!
 	lazy var clipboard = StreamClipboardController(service: CParsec.parsecImpl) { [weak self] key, command in
-		self?.sendClipboardShortcut(key, usesCommand: command)
+		self?.sendShortcut(key, usesGUI: command)
 	}
 	var u: UIImageView?
 	var lastImg: CGImage?
@@ -1143,20 +1143,16 @@ extension ParsecViewController: UIGestureRecognizerDelegate {
 		SettingsHandler.autoKeyboard = enabled
 	}
 
-	func toggleMissionControl() {
+	func showWindowOverview() {
 		guard UIApplication.shared.applicationState == .active,
 			  ParsecBackgroundManager.shared.hasActiveConnection,
-			  !ParsecBackgroundManager.shared.isMarkedForReconnect else { return }
-		cancelAutoKeyboard()
-		let toolbarControlHeld = keyboardAccessoriesView.map {
-			toolbarButtons(in: $0).contains { $0.keyText == "CONTROL" && $0.isOn }
-		} ?? false
-		let pressControl = physicalControlKeys.isEmpty && !toolbarControlHeld
-		// Preserve Control when the user is holding it on a keyboard or in the accessory bar.
-		if pressControl { CParsec.sendKeyboardMessage(keyCode: KEY_LCTRL.rawValue, pressed: true) }
-		CParsec.sendKeyboardMessage(keyCode: KEY_UP.rawValue, pressed: true)
-		CParsec.sendKeyboardMessage(keyCode: KEY_UP.rawValue, pressed: false)
-		if pressControl { CParsec.sendKeyboardMessage(keyCode: KEY_LCTRL.rawValue, pressed: false) }
+			  !ParsecBackgroundManager.shared.isMarkedForReconnect,
+			  !DataManager.model.isBlocked, CParsec.getStatus() == PARSEC_OK else { return }
+		switch DataManager.model.hostOperatingSystem {
+		case .windows: sendShortcut(KEY_TAB, usesGUI: true)
+		case .macOS: sendShortcut(KEY_UP, usesGUI: false)
+		case .unknown: break
+		}
 	}
 
 	private func requestAutoKeyboard() {
@@ -1311,14 +1307,14 @@ extension ParsecViewController: UIKeyInput, UITextInputTraits {
 		CParsec.sendVirtualKeyboardInput(text: text)
 	}
 
-	private func sendClipboardShortcut(_ key: ParsecKeycode, usesCommand: Bool) {
+	private func sendShortcut(_ key: ParsecKeycode, usesGUI: Bool) {
 		cancelAutoKeyboard()
-		let modifier = usesCommand ? KEY_LGUI : KEY_LCTRL
-		let name = usesCommand ? "LGUI" : "CONTROL"
+		let modifier = usesGUI ? KEY_LGUI : KEY_LCTRL
+		let name = usesGUI ? "LGUI" : "CONTROL"
 		let toolbarHeld = keyboardAccessoriesView.map {
 			toolbarButtons(in: $0).contains { $0.keyText == name && $0.isOn }
 		} ?? false
-		let physicallyHeld = usesCommand ? (!physicalCommandKeys.isEmpty || optCmdRemapActive) : !physicalControlKeys.isEmpty
+		let physicallyHeld = usesGUI ? (!physicalCommandKeys.isEmpty || optCmdRemapActive) : !physicalControlKeys.isEmpty
 		let pressModifier = !toolbarHeld && !physicallyHeld
 		if pressModifier { CParsec.sendKeyboardMessage(keyCode: modifier.rawValue, pressed: true) }
 		CParsec.sendKeyboardMessage(keyCode: key.rawValue, pressed: true)

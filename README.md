@@ -15,7 +15,7 @@ Before building, make sure you have the Parsec SDK framework symlinked or copied
 </a>
 
 ## Touch Control
-The horizontal control bar stays inside the phone's safe area. Its matching icons open the session menu, show or hide the keyboard, and toggle Mission Control on a Mac host using Control–Up Arrow.
+The horizontal control bar stays inside the phone's safe area. Its matching icons open the session menu, show or hide the keyboard, and show the host's open windows. The third button automatically opens **Mission Control** on Mac using Control–Up Arrow or **Task View** on Windows using Windows–Tab. It becomes available once the connected host reports its operating system.
 
 Connection statistics appear in a matching panel at the bottom of the safe area, with centered text that wraps to fit the screen.
 

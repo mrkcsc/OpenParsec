@@ -259,12 +259,14 @@ struct ParsecView: View {
 					HStack {
 						StreamControlBar(showMenu: showMenu, showKeyboard: showKeyboard,
 							keyboardButtonVisible: SettingsHandler.showKeyboardButton,
-							missionControlEnabled: !isReconnecting && !connectionLost && !dataModel.isBlocked,
+							windowOverviewEnabled: !isReconnecting && !connectionLost && !dataModel.isBlocked
+								&& dataModel.hostOperatingSystem != .unknown,
+							windowOverviewLabel: dataModel.hostOperatingSystem.windowOverviewLabel,
 							onMenu: {
 								showMenu.toggle()
 								if showMenu { getHostUserData() }
 							}, onKeyboard: toggleKeyboard,
-							onMissionControl: parsecViewController.toggleMissionControl)
+							onWindowOverview: parsecViewController.showWindowOverview)
 						Spacer(minLength: 0)
 					}
 					.fixedSize(horizontal: false, vertical: true)

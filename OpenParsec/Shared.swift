@@ -75,6 +75,7 @@ class SharedModel: ObservableObject {
 	@Published var output = "none"
 	@Published var displayConfigs: [ParsecDisplayConfig] = []
 	@Published var isBlocked = false
+	@Published var hostOperatingSystem: ParsecHostOS = .unknown
 
 }
 
