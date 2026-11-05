@@ -41,7 +41,7 @@ class ParsecGLKViewController: ParsecPlayground {
 	}
 
 	public func viewDidLoad() {
-		glkView = GLKView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+		glkView = GLKView(frame: viewController?.view.bounds ?? .zero)
 		glkRenderer = ParsecGLKRenderer(glkView, glkViewController, updateImage)
 		self.viewController?.view.addSubview(glkView)
 		setupGLKViewController()
@@ -57,7 +57,7 @@ class ParsecGLKViewController: ParsecPlayground {
 		let fps = SettingsHandler.preferredFramesPerSecond
 		if fps == 0 {
 			// Use device's maximum refresh rate (120Hz on ProMotion iPads)
-			glkViewController.preferredFramesPerSecond = Int(UIScreen.main.maximumFramesPerSecond)
+			glkViewController.preferredFramesPerSecond = viewController?.view.window?.windowScene?.screen.maximumFramesPerSecond ?? 60
 		} else {
 			glkViewController.preferredFramesPerSecond = fps
 		}
@@ -82,6 +82,9 @@ class ParsecGLKViewController: ParsecPlayground {
 	func updateSize(width: CGFloat, height: CGFloat) {
 		glkView.frame.size.width = width
 		glkView.frame.size.height = height
+		if SettingsHandler.preferredFramesPerSecond == 0 {
+			glkViewController.preferredFramesPerSecond = glkView.window?.windowScene?.screen.maximumFramesPerSecond ?? 60
+		}
 	}
 
 }

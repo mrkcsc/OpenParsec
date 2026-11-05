@@ -4,7 +4,7 @@ OpenParsec is a simple, open-source Parsec client for iOS/iPadOS written in Swif
 
 This project is still a major WIP, so apologies for the currently lackluster documentation. I'm also very new to both Swift and SwiftUI so I'm sure there are many places for improvement.
 
-Before building, make sure you have the Parsec SDK framework symlinked or copied to the `Frameworks` folder. Builds were tested on Xcode Version 12.5.
+Before building, make sure you have the Parsec SDK framework symlinked or copied to the `Frameworks` folder. Build with Xcode 27.1 or later; the app supports iOS 15 and later. The iOS 27.1 SDK enables [edge-to-edge layouts on iPhone Duo](https://developer.apple.com/iphone-duo/prepare/), including when folding or unfolding during a stream. Older SDKs put the app in a smaller compatibility window.
 
 ## Downloads
 <a href="https://stikstore.app/altdirect/?url=https://github.com/hugeBlack/OpenParsec/releases/download/nightly/altstore.json" target="_blank">

@@ -116,10 +116,10 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 	}
 
 	func computeRenderScale() -> CGFloat {
-		let nativeScale = UIScreen.main.nativeScale
+		let nativeScale = view.traitCollection.displayScale
 		guard scrollView.zoomScale > 1.01, let glk = glkView as? ParsecGLKViewController else { return nativeScale }
-		let vw = glk.glkView.frame.size.width
-		let vh = glk.glkView.frame.size.height
+		let vw = glk.glkView.bounds.width
+		let vh = glk.glkView.bounds.height
 		let sw = CGFloat(CParsec.hostWidth)
 		let sh = CGFloat(CParsec.hostHeight)
 		guard vw > 0, vh > 0, sw > 0, sh > 0 else { return nativeScale }
@@ -355,7 +355,7 @@ class ParsecViewController: UIViewController, UIScrollViewDelegate, ParsecTouchI
 		glkView.updateSize(width: w, height: h)
 		contentView.frame = CGRect(x: 0, y: 0, width: w, height: h)
 		scrollView.contentSize = CGSize(width: w, height: h)
-		CParsec.setFrame(w, h, UIScreen.main.scale)
+		CParsec.setFrame(w, h, view.traitCollection.displayScale)
 		restoreViewportIfNeeded()
 		if !keyboardFrameInScreen.isNull { updateKeyboardViewport() }
 	}
